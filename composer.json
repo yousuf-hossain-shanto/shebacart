@@ -6,6 +6,7 @@
             "email": "yousuf.hossain.shanto@gmail.com"
         }
     ],
+    "license": "MIT",
     "autoload": {
         "psr-4": {
             "YHShanto\\ShebaCart\\": "src/"
