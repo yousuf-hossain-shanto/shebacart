@@ -1,0 +1,23 @@
+{
+    "name": "yhshanto/shebacart",
+    "authors": [
+        {
+            "name": "Yousuf Hossain",
+            "email": "yousuf.hossain.shanto@gmail.com"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "YHShanto\\ShebaCart\\": "src/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "YHShanto\\ShebaCart\\ShebaCartServiceProvider"
+            ]
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}
