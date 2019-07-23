@@ -22,6 +22,7 @@ class CreateCartDatasTable extends Migration
             $table->bigInteger('user_id');
             $table->bigInteger('quantity')->default(1);
             $table->string('price')->default(0);
+            $table->longText('options')->nullable();
             $table->timestamps();
         });
     }

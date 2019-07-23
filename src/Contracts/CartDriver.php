@@ -1,5 +1,5 @@
 <?php
-namespace YHShanto\ShebaCart;
+namespace YHShanto\ShebaCart\Contracts;
 
 
 use Illuminate\Database\Eloquent\Model;
@@ -7,32 +7,32 @@ use Illuminate\Database\Eloquent\Model;
 interface CartDriver
 {
     /**
-     * @param Model $service
+     * @param $product_id
      * @param int $quantity
      * @param $price
      * @param array $options
      * @return CartInstance
      */
-    function add($service, $quantity = 1, $price, $options = []);
+    function add($product_id, $quantity = 1, $price, $options = []);
 
     /**
-     * @param $service_id
-     * @param array $option
+     * @param $product_id
+     * @param array $options
      * @return CartInstance
      */
-    function update($service_id, $option = []);
+    function update($product_id, $options = []);
 
     /**
-     * @param $service_id
+     * @param $product_id
      * @return CartInstance
      */
-    function remove($service_id);
+    function remove($product_id);
 
     /**
-     * @param $service_id
+     * @param $product_id
      * @return Model
      */
-    function get($service_id);
+    function get($product_id);
 
     /**
      * @return CartInstance

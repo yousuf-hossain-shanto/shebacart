@@ -3,53 +3,56 @@ namespace YHShanto\ShebaCart;
 
 
 use Illuminate\Database\Eloquent\Model;
+use YHShanto\ShebaCart\Contracts\CartDriver;
 
 class EloquentCartDriver implements CartDriver
 {
-    protected $instance;
+    protected $cart_type;
+    protected $auth;
 
-    public function __construct($instance)
+    public function __construct($cart_type, HasCart $auth)
 
     {
-        $this->instance = $instance;
+        $this->cart_type = $cart_type;
+        $this->auth = $auth;
     }
 
     /**
-     * @param Model $service
+     * @param $product_id
      * @param int $quantity
      * @param $price
      * @param array $options
      * @return CartInstance
      */
-    function add($service, $quantity = 1, $price, $options = [])
+    function add($product_id, $quantity = 1, $price, $options = [])
     {
         // TODO: Implement add() method.
     }
 
     /**
-     * @param $service_id
-     * @param array $option
+     * @param $product_id
+     * @param array $options
      * @return CartInstance
      */
-    function update($service_id, $option = [])
+    function update($product_id, $options = [])
     {
         // TODO: Implement update() method.
     }
 
     /**
-     * @param $service_id
+     * @param $product_id
      * @return CartInstance
      */
-    function remove($service_id)
+    function remove($product_id)
     {
         // TODO: Implement remove() method.
     }
 
     /**
-     * @param $service_id
+     * @param $product_id
      * @return Model
      */
-    function get($service_id)
+    function get($product_id)
     {
         // TODO: Implement get() method.
     }
