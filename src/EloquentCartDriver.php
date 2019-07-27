@@ -1,7 +1,6 @@
 <?php
 namespace YHShanto\ShebaCart;
 
-
 use Illuminate\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Notifications\Notifiable;
