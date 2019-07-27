@@ -1,46 +1,47 @@
 <?php
 namespace YHShanto\ShebaCart\Contracts;
 
-
-use Illuminate\Database\Eloquent\Model;
-
 interface CartDriver
 {
     /**
+     * @param string $product_type
      * @param $product_id
      * @param int $quantity
      * @param $price
      * @param array $options
-     * @return CartInstance
+     * @return mixed
      */
-    function add($product_id, $quantity = 1, $price, $options = []);
+    function add($product_type = 'App\Product', $product_id, $quantity = 1, $price, $options = []);
 
     /**
+     * @param string $product_type
      * @param $product_id
      * @param array $options
-     * @return CartInstance
+     * @return mixed
      */
-    function update($product_id, $options = []);
+    function update($product_type = 'App\Product', $product_id, $options = []);
 
     /**
+     * @param string $product_type
      * @param $product_id
-     * @return CartInstance
+     * @return mixed
      */
-    function remove($product_id);
+    function remove($product_type = 'App\Product', $product_id);
 
     /**
+     * @param string $product_type
      * @param $product_id
-     * @return Model
+     * @return mixed
      */
-    function get($product_id);
+    function get($product_type = 'App\Product', $product_id);
 
     /**
-     * @return CartInstance
+     * @return mixed
      */
     function all();
 
     /**
-     * @return boolean
+     * @return mixed
      */
     function destroy();
 
@@ -52,7 +53,7 @@ interface CartDriver
     function total($prefix = null, $formatted = false);
 
     /**
-     * @return integer
+     * @return mixed
      */
     function count();
 }

@@ -1,23 +1,23 @@
 <?php
 namespace YHShanto\ShebaCart;
 
-
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
+use YHShanto\ShebaCart\Contracts\CartDriver;
 
 class SessionCartDriver implements CartDriver
 {
-    protected $instance;
+    protected $cart_type;
 
     /**
      * @var $collection Collection
      */
     private static $collection;
 
-    public function __construct($instance)
+    public function __construct($cart_type)
 
     {
-        $this->instance = $instance;
+        $this->cart_type = $cart_type;
     }
 
     /**
@@ -33,7 +33,7 @@ class SessionCartDriver implements CartDriver
     {
 
         if (self::$collection == null) {
-            self::$collection = $this->getSession()->get('cart-' . $this->instance, collect());
+            self::$collection = $this->getSession()->get('cart-' . $this->cart_type, collect());
         }
         return self::$collection;
 
@@ -43,70 +43,77 @@ class SessionCartDriver implements CartDriver
 
     {
 
-        return $this->getSession()->put('cart-' . $this->instance, $this->getCollection());
+        return $this->getSession()->put('cart-' . $this->cart_type, $this->getCollection());
 
     }
 
     /**
-     * @param Model $service
+     * @param string $product_type
+     * @param $product_id
      * @param int $quantity
      * @param $price
      * @param array $options
-     * @return CartInstance
+     * @return mixed
      */
-    function add($service, $quantity = 1, $price, $options = [])
+    function add($product_type = 'App\Product', $product_id, $quantity = 1, $price, $options = [])
     {
         $newCollection = collect([
-            'service' => $service,
+            'product_type' => $product_type,
+            'product_id' => $product_id,
             'price' => $price,
             'quantity' => $quantity,
             'options' => $options
         ]);
         $this->getCollection()->push($newCollection);
-        return $this->triggerChange();
+        $this->triggerChange();
+        return $newCollection;
     }
 
     /**
-     * @param $service_id
-     * @param array $option
-     * @return CartInstance
+     * @param string $product_type
+     * @param $product_id
+     * @param array $options
+     * @return mixed
      */
-    function update($service_id, $option = [])
+    function update($product_type = 'App\Product', $product_id, $options = [])
     {
-        $collection = $this->get($service_id);
+        $collection = $this->get($product_type = 'App\Product', $product_id);
 
-        if ($collection && count($option)) {
-            foreach ($option as $property => $value) {
+        if ($collection && count($options)) {
+            foreach ($options as $property => $value) {
                 $collection[$property] = $value;
             }
             $this->triggerChange();
         }
+        return $collection;
     }
 
     /**
-     * @param $service_id
-     * @return CartInstance
+     * @param string $product_type
+     * @param $product_id
+     * @return mixed
      */
-    function remove($service_id)
+    function remove($product_type = 'App\Product', $product_id)
     {
-        $index = $this->getCollection()->search(function ($item, $key) use ($service_id) {
-            return $item->service->id == $service_id;
+        $index = $this->getCollection()->search(function ($item, $key) use ($product_type, $product_id) {
+            return $item->product_type == $product_type && $item->product_id == $product_id;
         });
-        $res = $index?$this->getCollection()->splice($index, 1):false;
-        return $res?$this->triggerChange():false;
+        $res = $index ? $this->getCollection()->splice($index, 1) : false;
+        return $res ? $this->triggerChange() : false;
     }
 
     /**
-     * @param $service_id
-     * @return Model|null
+     * @param string $product_type
+     * @param $product_id
+     * @return mixed
      */
-    function get($service_id)
+    function get($product_type = 'App\Product', $product_id)
     {
-        return $this->getCollection()->where('service.id', $service_id)->first();
+        return $this->getCollection()->where('product_type', $product_type)->where('product_id', $product_id)->first();
     }
 
     /**
-     * @return CartInstance
+     * @return mixed
      */
     function all()
     {
@@ -114,12 +121,12 @@ class SessionCartDriver implements CartDriver
     }
 
     /**
-     * @return boolean
+     * @return mixed
      */
     function destroy()
     {
         self::$collection = null;
-        return $this->getSession()->forget('cart-' . $this->instance);
+        return $this->getSession()->forget('cart-' . $this->cart_type);
     }
 
     /**
@@ -127,17 +134,20 @@ class SessionCartDriver implements CartDriver
      * @param bool $formatted
      * @return mixed
      */
-    function total($prefix = null, $formatted = true)
+    function total($prefix = null, $formatted = false)
     {
-        $total = $this->getCollection()->sum('price');
+        $total = $this->getCollection()->map(function ($item, $index) {
+            return $item->price*$item->quantity;
+        })->sum();
 
         if ($formatted) $total = number_format($total);
 
         return $prefix?$prefix . $total:$total;
+
     }
 
     /**
-     * @return integer
+     * @return mixed
      */
     function count()
     {

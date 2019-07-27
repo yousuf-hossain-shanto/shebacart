@@ -3,8 +3,17 @@ namespace YHShanto\ShebaCart;
 
 use Illuminate\Database\Eloquent\Model;
 
-class CanBeACartItem
+trait CanBeACartItem
 {
+
+    public function getProductTypeAttribute()
+
+    {
+
+        return get_class($this);
+
+    }
+
     public function carts()
 
     {

@@ -11,6 +11,8 @@ class CartItem extends Model
     protected $casts = [
         'options' => 'array'
     ];
+    protected $hidden = ['product_type', 'product_id', 'user_type', 'user_id', 'created_at', 'updated_at'];
+    protected $appends = ['product'];
 
     public function user()
 
@@ -26,5 +28,13 @@ class CartItem extends Model
 
         return $this->morphTo();
 
+    }
+
+    /**
+     * @param $product CanBeACartItem|Model
+     */
+    public function setProductAttribute($product) {
+        $this->attributes['product_type'] = get_class($product);
+        $this->attributes['product_id'] = $product->id;
     }
 }

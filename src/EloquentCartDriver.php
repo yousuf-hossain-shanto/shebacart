@@ -2,75 +2,99 @@
 namespace YHShanto\ShebaCart;
 
 
+use Illuminate\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Notifications\Notifiable;
 use YHShanto\ShebaCart\Contracts\CartDriver;
 
 class EloquentCartDriver implements CartDriver
 {
     protected $cart_type;
-    protected $auth;
+    protected $guard;
 
-    public function __construct($cart_type, HasCart $auth)
+    public function __construct($cart_type, $guard)
 
     {
         $this->cart_type = $cart_type;
-        $this->auth = $auth;
+        $this->guard = $guard;
     }
 
     /**
+     * @return Model|Authenticatable|Notifiable|HasCart
+     */
+    public function getUser()
+
+    {
+
+        return $this->guard->user();
+
+    }
+
+    /**
+     * @param string $product_type
      * @param $product_id
      * @param int $quantity
      * @param $price
      * @param array $options
-     * @return CartInstance
+     * @return mixed
      */
-    function add($product_id, $quantity = 1, $price, $options = [])
+    function add($product_type = 'App\Product', $product_id, $quantity = 1, $price, $options = [])
     {
-        // TODO: Implement add() method.
+        return $this->getUser()->carts()->create([
+            'cart_type' => $this->cart_type,
+            'product_type' => $product_type,
+            'product_id' => $product_id,
+            'quantity' => $quantity,
+            'price' => $price,
+            'options' => $options
+        ]);
     }
 
     /**
+     * @param string $product_type
      * @param $product_id
      * @param array $options
-     * @return CartInstance
+     * @return mixed
      */
-    function update($product_id, $options = [])
+    function update($product_type = 'App\Product', $product_id, $options = [])
     {
-        // TODO: Implement update() method.
+        return $this->getUser()->carts()->where('product_type', $product_type)->where('product_id', $product_id)->update($options);
     }
 
     /**
+     * @param string $product_type
      * @param $product_id
-     * @return CartInstance
+     * @return mixed
      */
-    function remove($product_id)
+    function remove($product_type = 'App\Product', $product_id)
     {
-        // TODO: Implement remove() method.
+        return $this->getUser()->carts()->where('product_type', $product_type)->where('product_id', $product_id)->delete();
     }
 
     /**
+     * @param string $product_type
      * @param $product_id
-     * @return Model
+     * @return mixed
      */
-    function get($product_id)
+    function get($product_type = 'App\Product', $product_id)
     {
-        // TODO: Implement get() method.
+        return $this->getUser()->carts()->where('product_type', $product_type)->where('product_id', $product_id)->first();
     }
 
     /**
-     * @return CartInstance
+     * @return mixed
      */
     function all()
     {
-        // TODO: Implement all() method.
+        return $this->getUser()->carts;
     }
 
     /**
-     * @return boolean
+     * @return mixed
      */
     function destroy()
     {
-        // TODO: Implement destroy() method.
+        return $this->getUser()->carts()->delete();
     }
 
     /**
@@ -80,14 +104,14 @@ class EloquentCartDriver implements CartDriver
      */
     function total($prefix = null, $formatted = false)
     {
-        // TODO: Implement total() method.
+        return $this->getUser()->carts()->selectRaw("price*quantity as total_price")->sum('total_price');
     }
 
     /**
-     * @return integer
+     * @return mixed
      */
     function count()
     {
-        // TODO: Implement count() method.
+        return $this->getUser()->carts()->sum('quantity');
     }
 }

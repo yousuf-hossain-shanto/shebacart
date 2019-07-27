@@ -1,20 +1,77 @@
 <?php
+
 namespace YHShanto\ShebaCart;
+
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Traits\ForwardsCalls;
+use YHShanto\ShebaCart\Contracts\CartDriver;
 
 class CartInstance
 {
+    use ForwardsCalls;
 
-    protected static $driver;
-    protected static $type;
+    protected static $eloquent_driver;
+    protected static $session_driver;
+    protected $type = 'cart';
 
-    public static function setDriver( string $name )
+    public function guard()
+
+    {
+        return Auth::guard();
+    }
+
+    public function getEloquentDriver()
 
     {
 
-        if (! in_array($name, ['session', 'database']) || $name == 'session') self::$driver = new SessionCartDriver(self::$type);
-
-//        if ($name == 'database') self::$driver = new EloquentCartDriver(self::)
+        if (self::$eloquent_driver == null) self::$eloquent_driver = new EloquentCartDriver($this->type, $this->guard());
+        return self::$eloquent_driver;
 
     }
 
+    public function getSessionDriver()
+
+    {
+
+        if (self::$session_driver == null) self::$session_driver = new SessionCartDriver($this->type);
+        return self::$session_driver;
+
+    }
+
+    public function detectDriver()
+
+    {
+
+        if ($this->guard()->check()) return $this->getEloquentDriver();
+        return $this->getSessionDriver();
+
+    }
+
+    public function migrateToDatabase()
+
+    {
+
+        /** @var HasCart|Model $user */
+        $user = $this->guard()->user();
+
+        $existingCart = $this->getSessionDriver()->all();
+
+        $this->getEloquentDriver()->destroy();
+
+        $user->carts()->createMany($existingCart);
+        $this->getSessionDriver()->destroy();
+
+    }
+
+    public function __call($method, $parameters)
+
+    {
+        return $this->forwardCallTo($this->detectDriver(), $method, $parameters);
+    }
+
+    public static function __callStatic($method, $parameters)
+    {
+        return (new static)->$method(...$parameters);
+    }
 }
