@@ -1,4 +1,5 @@
 <?php
+
 namespace YHShanto\ShebaCart;
 
 use Illuminate\Database\Eloquent\Model;
@@ -66,7 +67,7 @@ class SessionCartDriver implements CartDriver
         ]);
         $this->getCollection()->push($newCollection);
         $this->triggerChange();
-        return $newCollection;
+        return $this->get($product_type, $product_id);
     }
 
     /**
@@ -96,9 +97,9 @@ class SessionCartDriver implements CartDriver
     function remove($product_type = 'App\Product', $product_id)
     {
         $index = $this->getCollection()->search(function ($item, $key) use ($product_type, $product_id) {
-            return $item->product_type == $product_type && $item->product_id == $product_id;
+            return $item['product_type'] == $product_type && $item['product_id'] == $product_id;
         });
-        $res = $index ? $this->getCollection()->splice($index, 1) : false;
+        return $res = ($index || $index == 0) ? $this->getCollection()->splice($index, 1) : false;
         return $res ? $this->triggerChange() : false;
     }
 
@@ -109,7 +110,15 @@ class SessionCartDriver implements CartDriver
      */
     function get($product_type = 'App\Product', $product_id)
     {
-        return $this->getCollection()->where('product_type', $product_type)->where('product_id', $product_id)->first();
+        $product = $this->getCollection()->where('product_type', $product_type)->where('product_id', $product_id)->first();
+
+        return $product?[
+            'product_type' => $product_type,
+            'product' => ($product['product_type'])::find($product['product_id']),
+            'price' => $product['price'],
+            'quantity' => $product['quantity'],
+            'options' => $product['options']
+        ]:null;
     }
 
     /**
@@ -117,7 +126,15 @@ class SessionCartDriver implements CartDriver
      */
     function all()
     {
-        return $this->getCollection()->all();
+        return $this->getCollection()->map(function ($item) {
+            return [
+                'product_type' => $item['product_type'],
+                'product' => ($item['product_type'])::find($item['product_id']),
+                'price' => $item['price'],
+                'quantity' => $item['quantity'],
+                'options' => $item['options']
+            ];
+        })->all();
     }
 
     /**
@@ -137,12 +154,12 @@ class SessionCartDriver implements CartDriver
     function total($prefix = null, $formatted = false)
     {
         $total = $this->getCollection()->map(function ($item, $index) {
-            return $item->price*$item->quantity;
+            return $item->price * $item->quantity;
         })->sum();
 
         if ($formatted) $total = number_format($total);
 
-        return $prefix?$prefix . $total:$total;
+        return $prefix ? $prefix . $total : $total;
 
     }
 
