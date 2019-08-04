@@ -154,7 +154,7 @@ class SessionCartDriver implements CartDriver
     function total($prefix = null, $formatted = false)
     {
         $total = $this->getCollection()->map(function ($item, $index) {
-            return $item->price * $item->quantity;
+            return $item['price'] * $item['quantity'];
         })->sum();
 
         if ($formatted) $total = number_format($total);
