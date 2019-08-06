@@ -39,7 +39,7 @@ class EloquentCartDriver implements CartDriver
      */
     function add($product_type = 'App\Product', $product_id, $quantity = 1, $price, $options = [])
     {
-        return $this->getUser()->carts()->create([
+        $res = $this->getUser()->carts()->create([
             'cart_type' => $this->cart_type,
             'product_type' => $product_type,
             'product_id' => $product_id,
@@ -47,6 +47,10 @@ class EloquentCartDriver implements CartDriver
             'price' => $price,
             'options' => $options
         ]);
+        if (! $res) return $res;
+        $res->loadMorph(['product']);
+
+        return $res;
     }
 
     /**
