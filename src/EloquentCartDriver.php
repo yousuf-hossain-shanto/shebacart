@@ -48,7 +48,7 @@ class EloquentCartDriver implements CartDriver
             'options' => $options
         ]);
         if (! $res) return $res;
-        $res->loadMorph(['product']);
+        $res->setRelation('product', $res->product);
 
         return $res;
     }
