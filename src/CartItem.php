@@ -12,7 +12,7 @@ class CartItem extends Model
         'options' => 'array'
     ];
     protected $hidden = ['product_type', 'product_id', 'user_type', 'user_id', 'created_at', 'updated_at'];
-    protected $appends = ['product'];
+    protected $with = ['product'];
 
     public function user()
 
