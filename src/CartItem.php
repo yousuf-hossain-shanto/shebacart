@@ -11,7 +11,7 @@ class CartItem extends Model
     protected $casts = [
         'options' => 'array'
     ];
-    protected $hidden = ['product_type', 'product_id', 'user_type', 'user_id', 'created_at', 'updated_at'];
+    protected $hidden = ['cart_type', 'product_type', 'product_id', 'user_type', 'user_id', 'created_at', 'updated_at'];
     protected $with = ['product'];
 
     public function user()
