@@ -3,6 +3,7 @@
 namespace YHShanto\ShebaCart;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Traits\ForwardsCalls;
 
@@ -54,11 +55,16 @@ class CartInstance
         /** @var HasCart|Model $user */
         $user = $this->guard()->user();
 
-        $existingCart = $this->getSessionDriver()->all();
+        /** @var Collection $existingCart */
+        $existingCart = $this->getSessionDriver()->getCollection();
 
         $this->getEloquentDriver()->destroy();
 
-        $user->carts()->createMany($existingCart);
+        $t = $this->type;
+        $user->carts()->createMany($existingCart->map(function ($cartItem) use ($t) {
+            $cartItem['cart_type'] = $t;
+            return $cartItem;
+        })->toArray());
         $this->getSessionDriver()->destroy();
 
     }
