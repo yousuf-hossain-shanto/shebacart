@@ -70,6 +70,14 @@ class SessionCartDriver implements CartDriver
         return $this->get($product_type, $product_id);
     }
 
+    function find($product_type = 'App\Product', $product_id)
+    {
+        $index = $this->getCollection()->search(function ($item, $key) use ($product_type, $product_id) {
+            return $product_type == $item['product_type'] && $item['product_id'] == $product_id;
+        });
+        return ($index >= 0)?$index:-1;
+    }
+
     /**
      * @param string $product_type
      * @param $product_id
@@ -78,15 +86,16 @@ class SessionCartDriver implements CartDriver
      */
     function update($product_type = 'App\Product', $product_id, $options = [])
     {
-        $collection = $this->get($product_type = 'App\Product', $product_id);
-
-        if ($collection && count($options)) {
+        $index = $this->find($product_type, $product_id);
+        if ($index == -1) return false;
+        if ($this->getCollection()[$index] && count($options)) {
             foreach ($options as $property => $value) {
-                $collection[$property] = $value;
+                $this->getCollection()[$index][$property] = $value;
             }
+
             $this->triggerChange();
         }
-        return $collection;
+        return $this->getCollection()[$index];
     }
 
     /**
@@ -96,10 +105,8 @@ class SessionCartDriver implements CartDriver
      */
     function remove($product_type = 'App\Product', $product_id)
     {
-        $index = $this->getCollection()->search(function ($item, $key) use ($product_type, $product_id) {
-            return $item['product_type'] == $product_type && $item['product_id'] == $product_id;
-        });
-        return $res = ($index || $index == 0) ? $this->getCollection()->splice($index, 1) : false;
+        $index = $this->find($product_type, $product_id);
+        $res = $index != -1 ? $this->getCollection()->splice($index, 1) : false;
         return $res ? $this->triggerChange() : false;
     }
 
@@ -112,13 +119,13 @@ class SessionCartDriver implements CartDriver
     {
         $product = $this->getCollection()->where('product_type', $product_type)->where('product_id', $product_id)->first();
 
-        return $product?[
+        return $product ? [
             'product_type' => $product_type,
             'product' => ($product['product_type'])::find($product['product_id']),
             'price' => $product['price'],
             'quantity' => $product['quantity'],
             'options' => $product['options']
-        ]:null;
+        ] : null;
     }
 
     /**
