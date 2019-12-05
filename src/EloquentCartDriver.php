@@ -107,7 +107,7 @@ class EloquentCartDriver implements CartDriver
      */
     function total($prefix = null, $formatted = false)
     {
-        return $this->getUser()->carts()->selectRaw("price*quantity as total_price")->sum('total_price');
+        return $this->getUser()->carts()->selectRaw("price*quantity as total_price")->get()->sum('total_price');
     }
 
     /**
