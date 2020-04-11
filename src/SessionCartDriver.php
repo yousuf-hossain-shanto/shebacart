@@ -2,7 +2,6 @@
 
 namespace YHShanto\ShebaCart;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use YHShanto\ShebaCart\Contracts\CartDriver;
 
@@ -54,39 +53,53 @@ class SessionCartDriver implements CartDriver
      * @param int $quantity
      * @param $price
      * @param array $options
+     * @param null $tax
+     * @param array $config
      * @return mixed
      */
-    function add($product_type = 'App\Product', $product_id, $quantity = 1, $price, $options = [])
+    function add($product_type = 'App\Product', $product_id, $quantity = 1, $price, $options = [], $tax = null, $config = [])
     {
         $newCollection = collect([
+            'id' => uniqid($this->cart_type . '-'),
             'product_type' => $product_type,
             'product_id' => $product_id,
             'price' => $price,
+            'tax' => $tax,
             'quantity' => $quantity,
-            'options' => $options
+            'options' => $options,
+            'config' => $config
         ]);
         $this->getCollection()->push($newCollection);
         $this->triggerChange();
         return $this->get($product_type, $product_id);
     }
 
-    function find($product_type = 'App\Product', $product_id)
+    function find($product_type = 'App\Product', $product_id, $cart_item_id = null)
     {
-        $index = $this->getCollection()->search(function ($item, $key) use ($product_type, $product_id) {
-            return $product_type == $item['product_type'] && $item['product_id'] == $product_id;
-        });
-        return ($index >= 0)?$index:-1;
+        $index = -1;
+        if ($cart_item_id) {
+            $index = $this->getCollection()->search(function ($item, $key) use ($cart_item_id) {
+                return $cart_item_id == $item['id'];
+            });
+        } else {
+            $index = $this->getCollection()->search(function ($item, $key) use ($product_type, $product_id) {
+                return $product_type == $item['product_type'] && $item['product_id'] == $product_id;
+            });
+        }
+
+        return ($index >= 0) ? $index : -1;
     }
 
     /**
      * @param string $product_type
      * @param $product_id
      * @param array $options
+     * @param null $cart_item_id
      * @return mixed
      */
-    function update($product_type = 'App\Product', $product_id, $options = [])
+    function update($product_type = 'App\Product', $product_id, $options = [], $cart_item_id = null)
     {
-        $index = $this->find($product_type, $product_id);
+        $index = $this->find($product_type, $product_id, $cart_item_id);
         if ($index == -1) return false;
         if ($this->getCollection()[$index] && count($options)) {
             foreach ($options as $property => $value) {
@@ -101,11 +114,12 @@ class SessionCartDriver implements CartDriver
     /**
      * @param string $product_type
      * @param $product_id
+     * @param null $cart_item_id
      * @return mixed
      */
-    function remove($product_type = 'App\Product', $product_id)
+    function remove($product_type = 'App\Product', $product_id, $cart_item_id = null)
     {
-        $index = $this->find($product_type, $product_id);
+        $index = $this->find($product_type, $product_id, $cart_item_id);
         $res = $index != -1 ? $this->getCollection()->splice($index, 1) : false;
         return $res ? $this->triggerChange() : false;
     }
@@ -113,18 +127,23 @@ class SessionCartDriver implements CartDriver
     /**
      * @param string $product_type
      * @param $product_id
+     * @param null $cart_item_id
      * @return mixed
      */
-    function get($product_type = 'App\Product', $product_id)
+    function get($product_type = 'App\Product', $product_id, $cart_item_id = null)
     {
-        $product = $this->getCollection()->where('product_type', $product_type)->where('product_id', $product_id)->first();
+        $index = $this->find($product_type, $product_id, $cart_item_id);
+        $product = $index != -1 ? $this->getCollection()[$index] : null;
 
         return $product ? [
+            'id' => $product['id'],
             'product_type' => $product_type,
             'product' => ($product['product_type'])::find($product['product_id']),
             'price' => $product['price'],
+            'tax' => $product['tax'],
             'quantity' => $product['quantity'],
-            'options' => $product['options']
+            'options' => $product['options'],
+            'config' => $product['config']
         ] : null;
     }
 
@@ -135,11 +154,14 @@ class SessionCartDriver implements CartDriver
     {
         return $this->getCollection()->map(function ($item) {
             return [
+                'id' => $item['id'],
                 'product_type' => $item['product_type'],
                 'product' => ($item['product_type'])::find($item['product_id']),
                 'price' => $item['price'],
+                'tax' => $item['tax'],
                 'quantity' => $item['quantity'],
-                'options' => $item['options']
+                'options' => $item['options'],
+                'config' => $item['config']
             ];
         })->all();
     }
@@ -156,11 +178,13 @@ class SessionCartDriver implements CartDriver
     /**
      * @param null $prefix
      * @param bool $formatted
+     * @param bool $withTax
      * @return mixed
      */
-    function total($prefix = null, $formatted = false)
+    function total($prefix = null, $formatted = false, $withTax = false)
     {
-        $total = $this->getCollection()->map(function ($item, $index) {
+        $total = $this->getCollection()->map(function ($item, $index) use ($withTax) {
+            if ($withTax) return ($item['price'] + $item['tax']) * $item['quantity'];
             return $item['price'] * $item['quantity'];
         })->sum();
 
@@ -171,10 +195,15 @@ class SessionCartDriver implements CartDriver
     }
 
     /**
+     * @param null $cart_item_id
      * @return mixed
      */
-    function count()
+    function count($cart_item_id = null)
     {
+        if ($cart_item_id) {
+            $index = $this->find(null, null, $cart_item_id);
+            return $index != -1 ? $this->getCollection()[$index]['quantity'] : 0;
+        }
         return $this->getCollection()->sum('quantity');
     }
 }

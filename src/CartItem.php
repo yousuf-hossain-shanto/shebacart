@@ -9,7 +9,8 @@ class CartItem extends Model
     protected $table = 'cart_datas';
     protected $guarded = ['id'];
     protected $casts = [
-        'options' => 'array'
+        'options' => 'array',
+        'config' => 'array',
     ];
     protected $hidden = ['cart_type', 'product_type', 'product_id', 'user_type', 'user_id', 'created_at', 'updated_at'];
     protected $with = ['product'];
